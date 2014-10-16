@@ -11,12 +11,20 @@ def rand():
 def create_tenant(keystone):
     return keystone.tenants.create(rand())
 
+def get_role_id(keystone,role_name):
+    roles = keystone.roles.list()
+    for role in roles:
+	if role.name == role_name:
+		return role.id
+    # Create the role if it doesn't exist
+    return keystone.role.create(role_name)
 
-def create_user(keystone):
+def create_user(keystone,tenant):
     user_name = rand()
-    return keystone.users.create(user_name, password="nova",
-                                 email=user_name+"@example.com")
-
+    uid=keystone.users.create(user_name, password="nova",
+                              email=user_name+"@example.com")
+    keystone.roles.add_user_role(uid,get_role_id(keystone,"Member"),tenant)
+    return uid
 
 def create_ec2_credentials(keystone, user, tenant):
     keys = keystone.ec2.create(user.id, tenant.id)
@@ -26,10 +34,10 @@ def create_ec2_credentials(keystone, user, tenant):
 # Major hack. we'll use format for now...
 def create_conf_file(keystone, host, port, outfile):
     main_tenant = create_tenant(keystone)
-    main_user = create_user(keystone)
+    main_user = create_user(keystone,main_tenant)
     main_akey, main_skey = create_ec2_credentials(keystone, main_user, main_tenant)
     alt_tenant = create_tenant(keystone)
-    alt_user = create_user(keystone)
+    alt_user = create_user(keystone,alt_tenant)
     alt_akey, alt_skey = create_ec2_credentials(keystone, alt_user, alt_tenant)
     conf = '''
 [DEFAULT]
