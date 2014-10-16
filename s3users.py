@@ -73,7 +73,7 @@ if __name__ == '__main__':
                         default='http://127.0.0.1:35357/v2.0',
                         help='keystone admin endpoint')
     parser.add_argument('--s3host', type=str,
-                        default='http://127.0.0.1',
+                        default='127.0.0.1',
                         help='S3 hostname to use')
     parser.add_argument('--port', type=str, default='80',
                         help='S3 Port to use')
