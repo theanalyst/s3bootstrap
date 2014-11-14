@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 import uuid
 import argparse
 from keystoneclient.v2_0 import client
