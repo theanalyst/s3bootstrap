@@ -19,12 +19,12 @@ def create_user(keystone):
 
 
 def create_ec2_credentials(keystone, user, tenant):
-    keys = keystone.ec2_credentials.create(user.id, tenant.id)
+    keys = keystone.ec2.create(user.id, tenant.id)
     return keys.access, keys.secret
 
 
 # Major hack. we'll use format for now...
-def create_conf_file(keystone, host, port):
+def create_conf_file(keystone, host, port, outfile):
     main_tenant = create_tenant(keystone)
     main_user = create_user(keystone)
     main_akey, main_skey = create_ec2_credentials(keystone, main_user, main_tenant)
@@ -38,7 +38,7 @@ port = {port}
 is_secure = no
 
 [fixtures]
-bucket prefix = s3tests-{random}-
+bucket prefix = s3tests-{{random}}
 
 [s3 main]
 user_id = {user_id_main}
@@ -53,14 +53,15 @@ display_name = {user_name_alt}
 email = {email_alt}
 access_key = {akey_alt}
 secret_key = {skey_alt}
-'''.format(host=host, port=port,
-           user_id_main=main_tenant.id, user_name_main=main_tenant.name
+'''.format(host=host, port=port, random="random",
+           user_id_main=main_tenant.id, user_name_main=main_tenant.name,
            user_id_alt = alt_tenant.id, user_name_alt = alt_tenant.name, 
            skey_main=main_skey, akey_main=main_akey, 
            akey_alt=alt_akey, skey_alt = alt_skey,
            email_main=main_user.email, email_alt=alt_user.email)
 
-    print conf
+    with open(outfile,'wt') as f:
+        f.write(conf)
     
 if __name__ == '__main__':
 
@@ -76,9 +77,11 @@ if __name__ == '__main__':
                         help='S3 hostname to use')
     parser.add_argument('--port', type=str, default='80',
                         help='S3 Port to use')
+    parser.add_argument('-o', type=str, default='s3.conf',
+                        help='Output filename')
 
     args = parser.parse_args()
 
     keystone = client.Client(token=args.token, endpoint=args.endpoint)
 
-    create_conf_file()
+    create_conf_file(keystone, args.s3host, args.port, args.o)
