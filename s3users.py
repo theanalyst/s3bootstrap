@@ -11,20 +11,23 @@ def rand():
 def create_tenant(keystone):
     return keystone.tenants.create(rand())
 
-def get_role_id(keystone,role_name):
+
+def get_role_id(keystone, role_name, name):
     roles = keystone.roles.list()
     for role in roles:
-	if role.name == role_name:
-		return role.id
+        if role.name == role_name:
+            return role.id
     # Create the role if it doesn't exist
     return keystone.roles.create(role_name)
 
-def create_user(keystone,tenant):
+
+def create_user(keystone, tenant):
     user_name = rand()
-    uid=keystone.users.create(user_name, password="nova",
-                              email=user_name+"@example.com")
-    keystone.roles.add_user_role(uid,get_role_id(keystone,"Member"),tenant)
+    uid = keystone.users.create(user_name, password="nova",
+                                email=user_name+"@example.com")
+    keystone.roles.add_user_role(uid, get_role_id(keystone, "Member"), tenant)
     return uid
+
 
 def create_ec2_credentials(keystone, user, tenant):
     keys = keystone.ec2.create(user.id, tenant.id)
@@ -34,10 +37,11 @@ def create_ec2_credentials(keystone, user, tenant):
 # Major hack. we'll use format for now...
 def create_conf_file(keystone, host, port, outfile):
     main_tenant = create_tenant(keystone)
-    main_user = create_user(keystone,main_tenant)
-    main_akey, main_skey = create_ec2_credentials(keystone, main_user, main_tenant)
+    main_user = create_user(keystone, main_tenant)
+    main_akey, main_skey = create_ec2_credentials(keystone,
+                                                  main_user, main_tenant)
     alt_tenant = create_tenant(keystone)
-    alt_user = create_user(keystone,alt_tenant)
+    alt_user = create_user(keystone, alt_tenant)
     alt_akey, alt_skey = create_ec2_credentials(keystone, alt_user, alt_tenant)
     conf = '''
 [DEFAULT]
@@ -63,14 +67,14 @@ access_key = {akey_alt}
 secret_key = {skey_alt}
 '''.format(host=host, port=port, random="random",
            user_id_main=main_tenant.id, user_name_main=main_tenant.name,
-           user_id_alt = alt_tenant.id, user_name_alt = alt_tenant.name, 
-           skey_main=main_skey, akey_main=main_akey, 
-           akey_alt=alt_akey, skey_alt = alt_skey,
+           user_id_alt=alt_tenant.id, user_name_alt=alt_tenant.name,
+           skey_main=main_skey, akey_main=main_akey,
+           akey_alt=alt_akey, skey_alt=alt_skey,
            email_main=main_user.email, email_alt=alt_user.email)
 
-    with open(outfile,'wt') as f:
+    with open(outfile, 'wt') as f:
         f.write(conf)
-    
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
