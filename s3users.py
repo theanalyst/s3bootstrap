@@ -17,7 +17,7 @@ def get_role_id(keystone,role_name):
 	if role.name == role_name:
 		return role.id
     # Create the role if it doesn't exist
-    return keystone.role.create(role_name)
+    return keystone.roles.create(role_name)
 
 def create_user(keystone,tenant):
     user_name = rand()
