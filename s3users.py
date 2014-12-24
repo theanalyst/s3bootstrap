@@ -20,12 +20,8 @@ def get_or_create_tenant(keystone, tenant_name):
 
 
 def get_role_id(keystone, role_name):
-    roles = keystone.roles.list()
-    for role in roles:
-        if role.name == role_name:
-            return role.id
-    # Create the role if it doesn't exist
-    return keystone.roles.create(role_name)
+    return (get_first_of_name(keystone.roles.list(), role_name)
+            or keystone.roles.create(role_name))
 
 
 def get_or_create_user(keystone, tenant, user_name=rand()):
