@@ -24,18 +24,29 @@ def get_role_id(keystone, role_name):
             or keystone.roles.create(role_name))
 
 
+def add_tenant_role(user, role_name, tenant):
+    return (get_first_of_name(keystone.roles.roles_for_user(user, tenant),
+                              role_name)
+            or keystone.add_user_role(user, get_role_id(keystone, "_member_"),
+                                      tenant))
+
+
 def get_or_create_user(keystone, tenant, user_name=rand()):
     user = get_first_of_name(keystone.users.list(), user_name)
     if user is None:
         user = keystone.users.create(user_name, password="nova",
                                      email=user_name+"@example.com")
-    keystone.roles.add_user_role(user, get_role_id(keystone, "Member"), tenant)
+    add_tenant_role(user, "Member", tenant)
     return user
 
 
 def create_ec2_credentials(keystone, user, tenant):
-    keys = keystone.ec2.create(user.id, tenant.id)
-    return keys.access, keys.secret
+    lst = keystone.ec2.list(user.id)
+    if lst:
+        return lst[0].access, lst[0].secret
+    else:
+        keys = keystone.ec2.create(user.id, tenant.id)
+        return keys.access, keys.secret
 
 
 # Major hack. we'll use format for now...
