@@ -15,11 +15,8 @@ def get_first_of_name(lst, name):
 
 
 def get_or_create_tenant(keystone, tenant_name):
-    tenant = get_first_of_name(keystone.tenants.list(), tenant_name)
-    if tenant is not None:
-        return tenant
-    else:
-        return keystone.tenants.create(tenant_name)
+    return (get_first_of_name(keystone.tenants.list(), tenant_name)
+            or keystone.tenants.create(tenant_name))
 
 
 def get_role_id(keystone, role_name):
