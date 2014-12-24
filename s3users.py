@@ -43,7 +43,7 @@ def get_or_create_user(keystone, tenant, user_name=rand()):
 def create_ec2_credentials(keystone, user, tenant):
     lst = keystone.ec2.list(user.id)
     if lst:
-        return lst[0].access, lst[0].secret
+        return lst[-1].access, lst[-1].secret
     else:
         keys = keystone.ec2.create(user.id, tenant.id)
         return keys.access, keys.secret
