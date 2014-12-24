@@ -31,12 +31,13 @@ def get_role_id(keystone, role_name):
     return keystone.roles.create(role_name)
 
 
-def create_user(keystone, tenant):
-    user_name = rand()
-    uid = keystone.users.create(user_name, password="nova",
-                                email=user_name+"@example.com")
-    keystone.roles.add_user_role(uid, get_role_id(keystone, "Member"), tenant)
-    return uid
+def get_or_create_user(keystone, tenant, user_name=rand()):
+    user = get_first_of_name(keystone.users.list(), user_name)
+    if user is None:
+        user = keystone.users.create(user_name, password="nova",
+                                     email=user_name+"@example.com")
+    keystone.roles.add_user_role(user, get_role_id(keystone, "Member"), tenant)
+    return user
 
 
 def create_ec2_credentials(keystone, user, tenant):
@@ -47,11 +48,11 @@ def create_ec2_credentials(keystone, user, tenant):
 # Major hack. we'll use format for now...
 def create_conf_file(keystone, host, port, outfile):
     main_tenant = get_or_create_tenant(keystone, "s3tenant1")
-    main_user = create_user(keystone, main_tenant)
+    main_user = get_or_create_user(keystone, main_tenant, "s3user1")
     main_akey, main_skey = create_ec2_credentials(keystone,
                                                   main_user, main_tenant)
     alt_tenant = get_or_create_tenant(keystone, "s3tenant2")
-    alt_user = create_user(keystone, alt_tenant)
+    alt_user = get_or_create_user(keystone, alt_tenant, "s3user2")
     alt_akey, alt_skey = create_ec2_credentials(keystone, alt_user, alt_tenant)
     conf = '''
 [DEFAULT]
