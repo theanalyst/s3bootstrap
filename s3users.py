@@ -8,11 +8,21 @@ def rand():
     return str(uuid.uuid4()).replace('-', '')
 
 
-def create_tenant(keystone):
-    return keystone.tenants.create(rand())
+def get_first_of_name(lst, name):
+    '''A bit crazy, return the first item where
+    item.name matches given name,returns none otherwise'''
+    return next((it for it in lst if it.name == name), None)
 
 
-def get_role_id(keystone, role_name, name):
+def get_or_create_tenant(keystone, tenant_name):
+    tenant = get_first_of_name(keystone.tenants.list(), tenant_name)
+    if tenant is not None:
+        return tenant
+    else:
+        return keystone.tenants.create(tenant_name)
+
+
+def get_role_id(keystone, role_name):
     roles = keystone.roles.list()
     for role in roles:
         if role.name == role_name:
@@ -36,11 +46,11 @@ def create_ec2_credentials(keystone, user, tenant):
 
 # Major hack. we'll use format for now...
 def create_conf_file(keystone, host, port, outfile):
-    main_tenant = create_tenant(keystone)
+    main_tenant = get_or_create_tenant(keystone, "s3tenant1")
     main_user = create_user(keystone, main_tenant)
     main_akey, main_skey = create_ec2_credentials(keystone,
                                                   main_user, main_tenant)
-    alt_tenant = create_tenant(keystone)
+    alt_tenant = get_or_create_tenant(keystone, "s3tenant2")
     alt_user = create_user(keystone, alt_tenant)
     alt_akey, alt_skey = create_ec2_credentials(keystone, alt_user, alt_tenant)
     conf = '''
