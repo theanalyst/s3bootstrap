@@ -27,8 +27,9 @@ def get_role_id(keystone, role_name):
 def add_tenant_role(user, role_name, tenant):
     return (get_first_of_name(keystone.roles.roles_for_user(user, tenant),
                               role_name)
-            or keystone.add_user_role(user, get_role_id(keystone, "_member_"),
-                                      tenant))
+            or keystone.roles.add_user_role(user,
+                                            get_role_id(keystone, "_member_"),
+                                            tenant))
 
 
 def get_or_create_user(keystone, tenant, user_name=rand()):
